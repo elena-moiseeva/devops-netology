@@ -1,114 +1,103 @@
-1.
-Воспользуемся командой git  show aefea , которая найдёт нужный хеш , покажет его полное имя и комментарии коммита
+
+1  
+Oracle VirtualBox – был установлен.
 
 
-Ответ: 
-	хеш- commit aefead2207ef7e2aa5dc81a34aedf0cad4c32545
+2
+Hashicorp Vagrant – скачан и установлен.
 
 
-	комментарии коммита- Update CHANGELOG.md
+3
+Выполнила настройки
 
 
-2.
+4 
+Командой mkdir VAGRANT_HOME создаю директория
+Выполнила  команду  vagrant init
+В блокноте внесла в неё изменения
+Запустила команду vagrant up
 
 
-Для определения тега также воспользуемся командой git show 85024d3
+5
+RAM:1024mb
+CPU:1 cpu
+HDD:64gb
+video:8mb
 
 
-Ответ:  коммиту 85024d3 соответствует тег  tag: v0.12.23
+6
+короткие линки
+  v.memory = 1024
+  v.cpus = 2
+или командами ВМ
+   config.vm.provider "virtualbox" do |vb|
+     vb.memory = "1024"
+     vb.cpu = "2"
+   end
 
 
-
-3.
-
-С помощью команды git show b8d720^ находим первого родителя
-
-Также добавив к команде цифру 2 и узнаем имя второго родителя 
-	
-Ответ: 
-	у коммита b8d720 два родителя 
-	
-	Имя первого родителя 56cd7859e05c36c06b56d013b55a252d0bb7e158 
-
-	Имя второго родителя 9ea88f22fc6269854151c571162c5bcf958bee2b
+7
+Выполнила переход в виртуальную машину 
 
 
-4.
-
-Воспользовавшись командой git log --pretty=format:'%h %s' --graph v0.12.24,
-можно увидеть кусок дерева с тегами  v0.12.23 и v0.12.24 между которыми будут расположены хеши с комментариями .
-
-Ответ: хеши между тегами v0.12.23 и v0.12.24
-
-
-	b14b74c49 [Website] vmc provider links
-	
-	3f235065b Update CHANGELOG.md
-	
-	6ae64e247 registry: Fix panic when server is unreachable
-	
-	5c619ca1b website: Remove links to the getting started guide's old location
-	
-	06275647e Update CHANGELOG.md
- 	
-	d5f9411f5 command: Fix bug when using terraform login on Windows
- 	
-	4b6d06cc5 Update CHANGELOG.md
- 	
-	dd01a3507 Update CHANGELOG.md
- 	
-	225466bc3 Cleanup after v0.12.23 release
+8
+HISTFILESIZE - максимальное число строк в файле истории для сохранения, 
+строка 846
+HISTSIZE - число команд для сохранения  , 
+строка 862
 
 
+9
+{ list; }
+              список просто выполняется в текущем окружении оболочки. список должен быть завершен новой строкой или
+              точкой с запятой.  Это известно как групповая команда.  Статус возврата - это статус выхода из list.  Обратите внимание, что
+              в отличие от метасимволов ( и ), { и } являются зарезервированными словами и должны встречаться там, где зарезервированное слово
+              разрешено для распознавания.  Поскольку они не вызывают разрыва слова, они должны быть отделены от списка символами
+              пробелом или другим метасимволом оболочки.
+Строка 257
 
 
-5.
-Воспользовавшись командой  git grep --heading 'func providerSource' я узнала название файла, где произошло совпадение.
-Название файла: provider_source.go
+10
+touch {1..100000}.txt - создаст в текущей директории соответсвющее число фалов
+
+300000 - создать не удасться, это слишком дилинный список аргументов, максимальное число получил экспериментально - 110188
 
 
+11
+проверяет условие у -d /tmp и возвращает ее статус (0 или 1), наличие катаолга /tmp
 
-Ответ: имя коммита-  commit 5af1e6234ab6da412fb8637393c5a17a1b293663
+Например в скрипте можно так:
 
-
-
-6.
-Воспользовавшись командой  git grep --heading ' globalPluginDirs ' я узнала название файлов где произошло совпадение.
-Название файла:
-1) commands.go
-2) plugins.go
-
-
-
-Далее я применила команду git log -L :globalPluginDirs:commands.go
-Указав в ней имя файла где нужно искать, и название функции
+if [[ -d /tmp ]]
+then
+    echo "каталог есть"
+else
+    echo "каталога нет"
+fi
 
 
-
-Git сообщает, что начиная с строки 1: нет совпадений
-
-Проверяю второй файл git log -L :globalPluginDirs:plugins.go
-
-
-
-Из полученного результата видно что в двух коммитах  была изменена функция globalPluginDirs
-
-
-Ответ:
-
-	 commit 78b12205587fe839f10d946ea3fdc06719decb05
-
- 	 commit 78b12205587fe839f10d946ea3fdc06719decb05
+12
+vagrant@vagrant:~$ mkdir /tmp/new_path_dir/
+vagrant@vagrant:~$ cp /bin/bash /tmp/new_path_dir/
+vagrant@vagrant:~$ type -a bash
+bash is /usr/bin/bash
+bash is /bin/bash
+vagrant@vagrant:~$ PATH=/tmp/new_path_dir/:$PATH
+vagrant@vagrant:~$ type -a bash
+bash is /tmp/new_path_dir/bash
+bash is /usr/bin/bash
+bash is /bin/bash
 
 
+13
+batch - запускается когда уровень загрузки системы снизится ниже 1.5
 
-7.
+at - команда запускается в указанное время (в параметре)
 
-Воспользовавшись командой  git log -SsynchronizedWriters –oneline я  узнала хеш коммитов
 
-Теперь с помощью команды git show bdfea50cc определим автора функции synchronizedWriters
+14
+vagrant suspend
 
-Ответ: автор James Bardin
 
 
 
