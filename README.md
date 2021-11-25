@@ -58,19 +58,25 @@ vagrant@vagrant:~$ ls: cannot access 'root': No such file or directory
 5.
 
 
-vagrant@vagrant:~$  find / -name core > /tmp/testfile
-vagrant@vagrant:~$ ls -l
-total 24
+vagrant@vagrant:~$ ls
+ls
+catalog  file.input  file.output  name.txt  total
+vagrant@vagrant:~$ cat name.txt>name1.txt
+cat name.txt>name1.txt
+vagrant@vagrant:~$ ls
+ls
+catalog  file.input  file.output  name1.txt  name.txt  total
 
 
-6.
+
+6.   ИСПРАВЛЕНИЕ ПОСЛЕ ДОРАБОТКИ
 
 
-vagrant@vagrant:~$ echo "hello world" >file.input
-vagrant@vagrant:~$ cat <file.input> file.output
-vagrant@vagrant:~$ cat file.output
-hello world
-vagrant@vagrant:~$
+echo name2.txt > /dev/tty2
+
+ 
+vagrant@vagrant:~$ name2.txt
+
 
 
 
