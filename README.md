@@ -1,185 +1,111 @@
 1.
 
-Команда cd встроенная.
-Встроенная, потому что, работать внутри сессии терминала логичнее менять указатель на текущую директорию внутренней функцией, 
-Если использовать внешний вызов, то он будет работать со своим окружением, и менять  текущий каталог внутри своего окружения, а на вызвавший shell влиять не будет.  
+
+
+chdir("/tmp")
 
 
 
 2.
 
 
-vagrant@vagrant:~$ grep Actress name.txt | wc -l
-11
-vagrant@vagrant:~$ grep Actress name.txt -c
-11
 
--c, --count
-Подавляет обычный вывод; вместо этого выводит подсчет совпадающих строк для каждого входного файла.
+openat(AT_FDCWD, "/usr/share/misc/magic.mgc", O_RDONLY) = 3
+
 
 
 
 3.
 
 
-pstree   - отображение дерева процессов
--p         - идентификаторы PID 
+vagrant@vagrant:~$ less +F big/file.img > /dev/null
+"big/file.img" may be a binary file.  See it anyway?
 
-vagrant@vagrant:~$ pstree -p
-systemd(1)─┬─VBoxService(795)─┬─{VBoxService}(797)
-           │                  ├─{VBoxService}(798)
-           │                  ├─{VBoxService}(799)
-           │                  ├─{VBoxService}(800)
-           │                  ├─{VBoxService}(801)
-           │                  ├─{VBoxService}(802)
-           │                  ├─{VBoxService}(803)
-           │                  └─{VBoxService}(804)
+vagrant@vagrant:~$ rm -f big/file.img
+vagrant@vagrant:~$ lsof | grep deleted
+less      2263                        vagrant    3r      REG              253,0 1073741824     131105 /home/vagrant/big/file.img (deleted)
+less      2274                        vagrant    3r      REG              253,0 1073741824     131105 /home/vagrant/big/file.img (deleted)
+
+vagrant@vagrant:~$ lsof | grep deleted
+less      2263                        vagrant    3r      REG              253,0        1     131105 /home/vagrant/big/file.img (deleted)
+less      2274                        vagrant    3r      REG              253,0        1     131105 /home/vagrant/big/file.img (deleted)
+vagrant@vagrant:~$ kill -9 2263
+vagrant@vagrant:~$ lsof | grep deleted
+less      2274                        vagrant    3r      REG              253,0        1     131105 /home/vagrant/big/file.img (deleted)
+[1]-  Killed                  less +F big/file.img > /dev/null
+vagrant@vagrant:~$ kill -9 2274
+vagrant@vagrant:~$ lsof | grep deleted
+[2]+  Killed                  less +F big/file.img > /dev/null
 
 
 
 4.
 
 
-$ id
-$ tty
-$ ls -l `tty`
-$ screen
-ctrl-a d
-$ ls -l \root 2>/dev/pts/1
-$ who
-vagrant  pts/0        2021-11-20 17:49 (10.0.2.2)
-vagrant  pts/1        2021-11-20 19:44 (:pts/0:S.0)
-$ screen -ls
-$ screen –r 1590.pts-0.vagrant
-vagrant@vagrant:~$ ls: cannot access 'root': No such file or directory
+
+
+При удалении файла, который открыт на чтение другим процессом. Команда rm удалила ссылку на файл, которую хранит объект каталога, но не смогла удалить файл физически с диска, поскольку файл был открыт на чтение другой программой.
+Хоть файл уже и не имел имени, но все ещё имел файловый дескриптор (= инод), к которому продолжала обращаться программа. Это было также хорошо заметно по выводу lsof — файл был помечен как удаленный. Как только программу остановили, файл освободился и система смогла завершить начатое — удалить файл и зависимые структуры данных на диске окончательно.
+
 
 
 
 5.
 
 
-vagrant@vagrant:~$ ls
-ls
-catalog  file.input  file.output  name.txt  total
-vagrant@vagrant:~$ cat name.txt>name1.txt
-cat name.txt>name1.txt
-vagrant@vagrant:~$ ls
-ls
-catalog  file.input  file.output  name1.txt  name.txt  total
+root@vagrant:~# dpkg -L bpfcc-tools | grep sbin/opensnoop
+/usr/sbin/opensnoop-bpfcc
+root@vagrant:~# /usr/sbin/opensnoop-bpfcc
+PID    COMM               FD ERR PATH
+15436  systemd-udevd      14   0 /sys/fs/cgroup/unified/system.slice/systemd-udevd.service/cgroup.procs
+15436  systemd-udevd      14   0 /sys/fs/cgroup/unified/system.slice/systemd-udevd.service/cgroup.threads
+600    irqbalance          6   0 /proc/interrupts
+600    irqbalance          6   0 /proc/stat
+600    irqbalance          6   0 /proc/irq/20/smp_affinity
+600    irqbalance          6   0 /proc/irq/0/smp_affinity
+600    irqbalance          6   0 /proc/irq/1/smp_affinity
 
 
 
-6.   ИСПРАВЛЕНИЕ ПОСЛЕ ДОРАБОТКИ
+
+6. 
 
 
-echo name2.txt > /dev/tty2
-
- 
-vagrant@vagrant:~$ name2.txt
-
-
-
+Part of the utsname information is also accessible  via  /proc/sys/ker‐
+       nel/{ostype, hostname, osrelease, version, domainname}
 
 
 
 7.
 
 
-bash 5>&1 - Создаст дескриптор с 5 и перенатправит его в stdout
+Запускает команду, стоящую за символом &&, только если команда, стоящая перед этим символом была выполнена успешно
+Точка с запятой (;) должна разделять команды в группе последовательных команд. Точка с запятой является специальным символом, приказывающим shell выполнить первую команду, ждать ее завершения, затем выполнить следующую команду, ждать ее завершения и т.д. Это означает, что каждая команда строки выполняется поочередно, слева направо, не проверяя, успешно ли выполнилась предыдущая команда.
+
+set -e - прерывает сессию при любом ненулевом значении исполняемых команд в конвеере кроме последней.
+в случае &&  вместе с set -e- вероятно не имеет смысла, так как при ошибке , выполнение команд прекратиться.
 
 
-echo netology > /proc/$$/fd/5 - выведет в дескриптор "5", который был пернеаправлен в stdout
+
+
+8. 
 
 
 
-8.
+set -e - прекращает выполнение скрипта если команда завершилась ошибкой, выводит в stderr строку с ошибкой. Обойти эту проверку можно добавив в пайплайн к команде true: mycommand | true.
 
+set -u - прекращает выполнение скрипта, если встретилась несуществующая переменная.
 
-vagrant@vagrant:~$ ls /fakdir 6>&1 7>&2 2>&6 1>&9 | wc -l
-1
+set -x - выводит выполняемые команды в stdout перед выполненинем.
+
+set -o pipefail - прекращает выполнение скрипта, даже если одна из частей пайпа завершилась ошибкой. В этом случае bash-скрипт завершит выполнение, если mycommand вернёт ошибку, не смотря на true в конце пайплайна: mycommand | true.
 
 
 
 9.
 
 
-Будут выведены переменные окружения:
-можно получить тоже самое (только с разделением по переменным по строкам):
-printenv
-env
 
-
-
-10.
-
-
-
-/proc/<PID>/cmdline - полный путь до исполняемого файла процесса [PID]  
-
-/proc/<PID>/exe - содержит ссылку до файла запущенного для процесса [PID], 
-                        cat выведет содержимое запущенного файла, 
-                        запуск этого файла,  запустит еще одну копию самого файла
-
-
-
-
-11.
-
-
-
-SSE 4.2
-vagrant@vagrant:~$ grep sse /proc/cpuinfo
-
-
-
-12.
-
-
-при подключении ожидается пользователь, а не другой процесс, и нет локального tty в данный момент. 
-для запуска можно добавить -t - , и команда исполняется c принудительным созданием псевдотерминала
-
-
-
-13.
-
-Открываю 2 параллельные ssh сессии.
-
-В одной сессии запускаю, например top. Отсоединяю его от текущей сесcии путем bg, disown top.
-
-   vagrant@vagrant:~$ ps -a
-        PID TTY          TIME CMD
-          2638 pts/0    00:00:00 top
-           2688 pts/0    00:00:00 ps
-Перехожу в другой терминал, выполняю reptyr 2638 (это PID моего процесса).
-
-Во время выполнения столкнулся с проблемой, Unable to attach to pid 2638: Operation not permitted The kernel denied permission while attaching. If your uid matches the target's, check the value of /proc/sys/kernel/yama/ptrace_scope. For more information, see /etc/sysctl.d/10-ptrace.conf
-
-После изменения в /proc/sys/kernel/yama/ptrace_scope значения kernel.yama.ptrace_scope с 1 на 0 - передача процесса в другую сессию заработала.
-echo 0|sudo tee /proc/sys/kernel/yama/ptrace_scope
-
-reptyr 2638
-отображается таблица с процессами и информацией по ним.
-
-
-
-
-
-
-
-
-
-14.
-
-
-
-команда tee -  считывает ввод команды, далее подает результат на стандартный вывод (в терминал), а так же записывает его в файл. Таким образом мы можем наблюдать что у нас будет записано в файл, не открывая его. Так же можно записать результат выполнения в несколько файлов.
-
-  echo является встроенной командой оболочки, а не простой командой, следовательно параметр sudo на неё не распространяется, чтобы выполнить echo с правами sudo, надо 
-  запустить саму оболочку от имени su. А вот tee уже является сторонней по отношению к shell командой, не встроенной, по этому её можно запустить под sudo. По этому команда
-  sudo echo не будет работать, т.к. она будет выполняться от имени обычного пользователя, у которого нету прав на доступ к /root/new_file, а команда tee уже будет обращаться
-  к репозиторию /root/ от имени su, следовательно права на доступ у неё будут.
-
-
-
-
+Ss - процесс, ожидающий завершения, лидер сессии
+R+ - процесс выполняется, фоновый процесс
 
