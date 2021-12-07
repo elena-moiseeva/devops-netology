@@ -10,7 +10,9 @@ chdir("/tmp")
 
 
 
-openat(AT_FDCWD, "/usr/share/misc/magic.mgc", O_RDONLY) = 3
+openat(AT_FDCWD, "/usr/share/misc/magic.mgc", O_RDONLY)=3
+
+
 
 
 
@@ -18,25 +20,10 @@ openat(AT_FDCWD, "/usr/share/misc/magic.mgc", O_RDONLY) = 3
 3.
 
 
-vagrant@vagrant:~$ less +F big/file.img > /dev/null
-"big/file.img" may be a binary file.  See it anyway?
-
-vagrant@vagrant:~$ rm -f big/file.img
-vagrant@vagrant:~$ lsof | grep deleted
-less      2263                        vagrant    3r      REG              253,0 1073741824     131105 /home/vagrant/big/file.img (deleted)
-less      2274                        vagrant    3r      REG              253,0 1073741824     131105 /home/vagrant/big/file.img (deleted)
-
-vagrant@vagrant:~$ lsof | grep deleted
-less      2263                        vagrant    3r      REG              253,0        1     131105 /home/vagrant/big/file.img (deleted)
-less      2274                        vagrant    3r      REG              253,0        1     131105 /home/vagrant/big/file.img (deleted)
-vagrant@vagrant:~$ kill -9 2263
-vagrant@vagrant:~$ lsof | grep deleted
-less      2274                        vagrant    3r      REG              253,0        1     131105 /home/vagrant/big/file.img (deleted)
-[1]-  Killed                  less +F big/file.img > /dev/null
-vagrant@vagrant:~$ kill -9 2274
-vagrant@vagrant:~$ lsof | grep deleted
-[2]+  Killed                  less +F big/file.img > /dev/null
-
+agrant@vagrant:~$ lsof -p 1541
+...
+pulseaudi 1541 vagrant    6u      REG                0,1 67108864  32280 /memfd:pulseaudio (deleted)
+vagrant@vagrant:~$ echo '' >/proc/1541/fd/6
 
 
 4.
@@ -44,13 +31,16 @@ vagrant@vagrant:~$ lsof | grep deleted
 
 
 
-При удалении файла, который открыт на чтение другим процессом. Команда rm удалила ссылку на файл, которую хранит объект каталога, но не смогла удалить файл физически с диска, поскольку файл был открыт на чтение другой программой.
-Хоть файл уже и не имел имени, но все ещё имел файловый дескриптор (= инод), к которому продолжала обращаться программа. Это было также хорошо заметно по выводу lsof — файл был помечен как удаленный. Как только программу остановили, файл освободился и система смогла завершить начатое — удалить файл и зависимые структуры данных на диске окончательно.
+"Зомби" процессы, в отличии от "сирот" освобождают свои ресурсы, но не освобождают запись в таблице процессов.
+запись освободиться при вызове wait() родительским процессом.
+
 
 
 
 
 5.
+
+
 
 
 root@vagrant:~# dpkg -L bpfcc-tools | grep sbin/opensnoop
