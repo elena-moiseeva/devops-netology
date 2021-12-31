@@ -2,96 +2,16 @@
 
 
 
-
-cd /opt
-sudo wget https://github.com/prometheus/node_exporter/releases/download/v1.2.2/node_exporter-1.2.2.linux-amd64.tar.gz
-sudo tar xzf node_exporter-1.2.2.linux-amd64.tar.gz
-sudo rm -f node_exporter-1.2.2.linux-amd64.tar.gz
-sudo touch node_exporter-1.2.2.linux-amd64/node_exporter.env
-echo "EXTRA_OPTS=\"--log.level=info\"" | sudo tee node_exporter-1.2.2.linux-amd64/node_exporter.env
-sudo mkdir -p /usr/local/lib/systemd/system/
-sudo touch /usr/local/lib/systemd/system/node_exporter.service
-sudo systemctl daemon-reload
-sudo systemctl enable node_exporter.service
-unit-файл:
-
-[Unit]
-Description="Netology course node_exporer service file"
-
-[Service]
-EnvironmentFile=/opt/node_exporter-1.2.2.linux-amd64/node_exporter.env
-ExecStart=/opt/node_exporter-1.2.2.linux-amd64/node_exporter $EXTRA_OPTS
-StandardOutput=file:/var/log/node_explorer.log
-StandardError=file:/var/log/node_explorer.log
-
-[Install]
-WantedBy=multi-user.target
-добавления опций к запускаемому процессу через внешний файл
-можно добавить через файл /opt/node_exporter-1.2.2.linux-amd64/node_exporter.env, в переменной EXTRA_OPTS
-
-EXTRA_OPTS="--log.level=info"
-
-vagrant@vagrant:~$ ps -e |grep node_exporter
-   2329 ?        00:00:00 node_exporter
-vagrant@vagrant:~$ sudo systemctl stop node_exporter
-vagrant@vagrant:~$ ps -e |grep node_exporter
-vagrant@vagrant:~$ systemctl start node_exporter
-==== AUTHENTICATING FOR org.freedesktop.systemd1.manage-units ===
-Authentication is required to start 'node_exporter.service'.
-Authenticating as: vagrant,,, (vagrant)
-Password:
-==== AUTHENTICATION COMPLETE ===
-vagrant@vagrant:~$ ps -e |grep node_exporter
-   2447 ?        00:00:00 node_exporter
-vagrant@vagrant:~$ sudo cat /proc/2447/environ
-LANG=en_US.UTF-8LANGUAGE=en_US:PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/binINVOCATION_ID=96f3ca4b9e01466cb67b585d912085e5EXTRA_OPTS=--log.level=info
-
-
-$ journalctl -u node_exporter.service
-Dec 27 21:27:15 vagrant systemd[1]: Started "Netology course node_exporer s>
-Dec 27 21:42:46 vagrant systemd[1]: Stopping "Netology course node_exporer >
-Dec 27 21:42:46 vagrant systemd[1]: node_exporter.service: Succeeded.
-Dec 27 21:42:46 vagrant systemd[1]: Stopped "Netology course node_exporer s>
-Dec 27 21:43:23 vagrant systemd[1]: Started "Netology course node_exporer s>
+Быстрый ответ
+Разрежённый файл (англ. sparse file) — файл, в котором последовательности нулевых байтов заменены на информацию об этих последовательностях (список дыр). Дыра (англ. hole) — последовательность нулевых байт внутри файла, не записанная на диск.
 
 
 
+2.
 
 
 
-
-
-
-
-2
-
-
-
-CPU:
-    node_cpu_seconds_total{cpu="0",mode="idle"} 2238.49
-    node_cpu_seconds_total{cpu="0",mode="system"} 16.72
-    node_cpu_seconds_total{cpu="0",mode="user"} 6.86
-    process_cpu_seconds_total
-    
-Memory:
-    node_memory_MemAvailable_bytes 
-    node_memory_MemFree_bytes
-    
-Disk(если несколько дисков то для каждого):
-    node_disk_io_time_seconds_total{device="sda"} 
-    node_disk_read_bytes_total{device="sda"} 
-    node_disk_read_time_seconds_total{device="sda"} 
-    node_disk_write_time_seconds_total{device="sda"}
-    
-Network(так же для каждого активного адаптера):
-    node_network_receive_errs_total{device="eth0"} 
-    node_network_receive_bytes_total{device="eth0"} 
-    node_network_transmit_bytes_total{device="eth0"}
-    node_network_transmit_errs_total{device="eth0"}
-
-
-
-
+Нет, не могут, т.к. это просто ссылки на один и тот же inode - в нём и хранятся права доступа и имя владельца.
 
 
 
@@ -99,34 +19,66 @@ Network(так же для каждого активного адаптера):
 3.
 
 
+Добавились диски sdb и sdc
 
-vagrant@vagrant:~$ sudo lsof -i :19999
-COMMAND PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-netdata 613 netdata    4u  IPv4  23176      0t0  TCP *:19999 (LISTEN)
-netdata 613 netdata   32u  IPv4  25513      0t0  TCP vagrant:19999->_gateway:60627 (ESTABLISHED)
-
- 
-
-
+vagrant@vagrant:~$ lsblk
+NAME                 MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                    8:0    0   64G  0 disk
+├─sda1                 8:1    0  512M  0 part /boot/efi
+├─sda2                 8:2    0    1K  0 part
+└─sda5                 8:5    0 63.5G  0 part
+  ├─vgvagrant-root   253:0    0 62.6G  0 lvm  /
+  └─vgvagrant-swap_1 253:1    0  980M  0 lvm  [SWAP]
+sdb                    8:16   0  2.5G  0 disk
+sdc                    8:32   0  2.5G  0 disk
 
 
 
 
 4.
 
+vagrant@vagrant:~$ sudo fdisk /dev/sdb
 
+Welcome to fdisk (util-linux 2.34).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
 
+Device does not contain a recognized partition table.
+Created a new DOS disklabel with disk identifier 0xd5243481.
 
-Можно, так как есть соответствующая строка:
-vagrant@vagrant:~$ dmesg |grep virtualiz
-[    0.002191] CPU MTRRs all blank - virtualized system.
-[    0.105094] Booting paravirtualized kernel on KVM
-[    5.137509] systemd[1]: Detected virtualization oracle.
+Command (m for help): F
+Unpartitioned space /dev/sdb: 2.51 GiB, 2683305984 bytes, 5240832 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
 
+Start     End Sectors  Size
+ 2048 5242879 5240832  2.5G
 
+Command (m for help): n
+Partition type
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended (container for logical partitions)
+Select (default p): p
+Partition number (1-4, default 1):
+First sector (2048-5242879, default 2048):
+Last sector, +/-sectors or +/-size{K,M,G,T,P} (2048-5242879, default 5242879): +2G
 
+Created a new partition 1 of type 'Linux' and of size 2 GiB.
 
+Command (m for help): n
+Partition type
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended (container for logical partitions)
+Select (default p): p
+Partition number (2-4, default 2):
+First sector (4196352-5242879, default 4196352):
+Last sector, +/-sectors or +/-size{K,M,G,T,P} (4196352-5242879, default 5242879):
 
+Created a new partition 2 of type 'Linux' and of size 511 MiB.
+
+Command (m for help): w
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
 
 
 
@@ -134,28 +86,36 @@ vagrant@vagrant:~$ dmesg |grep virtualiz
 
 
 
+vagrant@vagrant:~$ sudo sfdisk -d /dev/sdb > sdb.dump
+vagrant@vagrant:~$ sudo sfdisk /dev/sdc < sdb.dump
+Checking that no-one is using this disk right now ... OK
 
+Disk /dev/sdc: 2.51 GiB, 2684354560 bytes, 5242880 sectors
+Disk model: VBOX HARDDISK
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
 
+>>> Script header accepted.
+>>> Script header accepted.
+>>> Script header accepted.
+>>> Script header accepted.
+>>> Created a new DOS disklabel with disk identifier 0xd5243481.
+/dev/sdc1: Created a new partition 1 of type 'Linux' and of size 2 GiB.
+/dev/sdc2: Created a new partition 2 of type 'Linux' and of size 511 MiB.
+/dev/sdc3: Done.
 
-vagrant@vagrant:~$ /sbin/sysctl -n fs.nr_open
-1048576
-максимальное число открытых дескрипторов для ядра (системы), для пользователя задать больше этого числа нельзя (если не менять). 
-Число задается кратное 1024, в данном случае =1024*1024.
+New situation:
+Disklabel type: dos
+Disk identifier: 0xd5243481
 
+Device     Boot   Start     End Sectors  Size Id Type
+/dev/sdc1          2048 4196351 4194304    2G 83 Linux
+/dev/sdc2       4196352 5242879 1046528  511M 83 Linux
 
-vagrant@vagrant:~$ cat /proc/sys/fs/file-max
-9223372036854775807
-макс. предел ОС
-
-vagrant@vagrant:~$ ulimit -Sn
-1024
-
-мягкий лимит (так же ulimit -n)на пользователя (может быть увеличен процессов в процессе работы)
-
-vagrant@vagrant:~$ ulimit -Hn
-1048576
-
-жесткий лимит на пользователя (не может быть увеличен, только уменьшен)
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.
 
 
 
@@ -165,36 +125,15 @@ vagrant@vagrant:~$ ulimit -Hn
 
 
 
-
-root@vagrant:~# unshare --pid --fork --mount-proc sleep 1h &
-[1] 1439
-root@vagrant:~# lsns
-        NS TYPE   NPROCS   PID USER            COMMAND
-4026531835 cgroup    105     1 root            /sbin/init
-4026531836 pid       104     1 root            /sbin/init
-4026531837 user      105     1 root            /sbin/init
-4026531838 uts       103     1 root            /sbin/init
-4026531839 ipc       105     1 root            /sbin/init
-4026531840 mnt        93     1 root            /sbin/init
-4026531860 mnt         1    21 root            kdevtmpfs
-4026531992 net       105     1 root            /sbin/init
-4026532162 mnt         1   392 root            /lib/systemd/systemd-udevd
-4026532163 uts         1   392 root            /lib/systemd/systemd-udevd
-4026532164 mnt         1   398 systemd-network /lib/systemd/systemd-networkd
-4026532183 mnt         1   554 systemd-resolve /lib/systemd/systemd-resolved
-4026532184 mnt         2  1439 root            unshare --pid --fork --mount-
-4026532185 pid         1  1440 root            sleep 1h
-4026532249 mnt         1   581 root            /usr/sbin/irqbalance --foregr
-4026532250 mnt         1   592 root            /lib/systemd/systemd-logind
-4026532251 uts         1   592 root            /lib/systemd/systemd-logind
-4026532252 mnt         4   613 netdata         /usr/sbin/netdata -D
-root@vagrant:~# nsenter -a -t 1440
-root@vagrant:/# ps
-    PID TTY          TIME CMD
-      1 pts/0    00:00:00 sleep
-      2 pts/0    00:00:00 bash
-     11 pts/0    00:00:00 ps
-
+root@vagrant:~# mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sd[bc]1
+mdadm: Note: this array has metadata at the start and
+    may not be suitable as a boot device.  If you plan to
+    store '/boot' on this device please ensure that
+    your boot-loader understands md/v1.x metadata, or use
+    --metadata=0.90
+Continue creating array? y
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
 
 
 
@@ -203,51 +142,194 @@ root@vagrant:/# ps
 
 
 
-
-:(){ :|:& };:
- 
-Написана на баше. Разберем каждый символ
-: - пустая операция. Если ввести ее в линуксовую консоль... ничего не произойдет
-%имя% (%аргументы%) {%тело%} - оболочка для объявления функции в баше
-| - pipe. Этот оператор позволяет перевести вывод (stdout) команды на ввод (stdin) следующей. как пример - "cat file | grep word". cat по дефолту выводит все строки file на консоль, но из-за оператора "|", он передает вывод на команду grep. а команда grep уже выводит строки на консоль.
-& - откладывает операцию в фон. программа продолжает выполнятся, но вы сможете вводить в консоль новые команды. вывод также идет на консоль
-; - разделение команд. смысл тот же, что и в программировании. Например, если сделать "ls;ls" - будет дважды выведен список директорий
- 
- сначала объявляется функция с именем ":", в которой запускается эта же функцию, и откладывается в фон.
-А после объявления функции, с помощью последнего ":", ее запускаем.
-запускается процесс, который форкается бесконечно пока не используются все доступные номера PID, или система не виснет из-за ухода в своп. 
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md1 started.
 
 
 
 
-dmesg показал, что сработали лимиты системы cgroups на уровне user.slice. Видимо сработали ограничения на максимальное число запущенных процессов в оболочке пользователя:
-[ 7678.125941] cgroup: fork rejected by pids controller in /user.slice/user-1000.slice/session-4.scope
+8.
 
-Текущий лимит на максимальное число запущенных процессов для пользователя, который вошел в систему, можно посмотреть командой (стоит limit: 5012):
 
-vagrant@vagrant:~$ systemctl status user-1000.slice
-● user-1000.slice - User Slice of UID 1000
-     Loaded: loaded
-    Drop-In: /usr/lib/systemd/system/user-.slice.d
-             └─10-defaults.conf
-     Active: active since Fri 2021-12-17 09:03:14 UTC; 10h ago
-       Docs: man:user@.service(5)
-      Tasks: 7 (limit: 2356)
-     Memory: 11.5M
-     CGroup: /user.slice/user-1000.slice
 
-Настройки этого лимита по умолчанию можно посмотреть командой (стоит 33% от системного ограничения):
+root@vagrant:~# pvcreate /dev/md0
+  Physical volume "/dev/md0" successfully created.
+root@vagrant:~# pvcreate /dev/md1
+  Physical volume "/dev/md1" successfully created.
 
-[Unit]
-Description=User Slice of UID %j
-Documentation=man:user@.service(5)
-After=systemd-user-sessions.service
-StopWhenUnneeded=yes
+root@vagrant:~# pvs
+  PV         VG        Fmt  Attr PSize    PFree
+  /dev/md0             lvm2 ---    <2.00g   <2.00g
+  /dev/md1             lvm2 ---  1018.00m 1018.00m
+  /dev/sda5  vgvagrant lvm2 a--   <63.50g       0
 
-[Slice]
-TasksMax=33%
 
-Если установить ulimit -u 40 - число процессов будет ограниченно 40 для пользоователя.
+
+
+9.
+
+
+root@vagrant:~# vgcreate netology35 /dev/md0 /dev/md1
+  Volume group "netology35" successfully created
+root@vagrant:~# vgs
+  VG         #PV #LV #SN Attr   VSize   VFree
+  netology35   2   0   0 wz--n-  <2.99g <2.99g
+  vgvagrant    1   2   0 wz--n- <63.50g     0
+
+
+
+10.
+
+
+
+root@vagrant:~# lvcreate -L 100m -n n35-10-lv netology35 /dev/md1
+  Logical volume "n35-10-lv" created.
+root@vagrant:~# lvs -o +devices
+  LV        VG         Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert Devices
+  n35-10-lv netology35 -wi-a----- 100.00m                                                     /dev/md1(0)
+  root      vgvagrant  -wi-ao---- <62.54g                                                     /dev/sda5(0)
+  swap_1    vgvagrant  -wi-ao---- 980.00m                                                     /dev/sda5(16010)
+
+
+
+
+
+
+11.
+
+
+root@vagrant:~# mkfs.ext4 -L n35-11 -m 1 /dev/mapper/netology35-n35--10--lv
+mke2fs 1.45.5 (07-Jan-2020)
+Creating filesystem with 25600 4k blocks and 25600 inodes
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (1024 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+root@vagrant:~# blkid | grep n35
+/dev/mapper/netology35-n35--10--lv: LABEL="n35-11" UUID="08fcf9f4-ae46-4e5a-ab41-9b27bd5b68b3" TYPE="ext4"
+
+
+
+12.
+
+
+
+root@vagrant:~# mkdir /tmp/new
+root@vagrant:~# mount /dev/mapper/netology35-n35--10--lv /tmp/new/
+root@vagrant:~# mount | grep n35
+/dev/mapper/netology35-n35--10--lv on /tmp/new type ext4 (rw,relatime,stripe=256)
+
+
+
+13.
+
+
+root@vagrant:~# cd /tmp/new/
+root@vagrant:/tmp/new# wget https://mirror.yandex.ru/ubuntu/ls-lR.gz -O /tmp/new/test.gz
+--2021-12-31 10:34:28--  https://mirror.yandex.ru/ubuntu/ls-lR.gz
+Resolving mirror.yandex.ru (mirror.yandex.ru)... 213.180.204.183, 2a02:6b8::183
+Connecting to mirror.yandex.ru (mirror.yandex.ru)|213.180.204.183|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 21503106 (21M) [application/octet-stream]
+Saving to: ‘/tmp/new/test.gz’
+
+/tmp/new/test.gz     100%[======================>]  20.51M  5.35MB/s    in 3.8s
+
+2021-12-31 10:34:32 (5.35 MB/s) - ‘/tmp/new/test.gz’ saved [21503106/21503106]
+
+root@vagrant:/tmp/new# ls -l
+total 21016
+drwx------ 2 root root    16384 Dec 31 10:31 lost+found
+-rw-r--r-- 1 root root 21503106 Dec 31 05:31 test.gz
+root@vagrant:/tmp/new# df -h /tmp/new/
+Filesystem                          Size  Used Avail Use% Mounted on
+/dev/mapper/netology35-n35--10--lv   93M   21M   70M  23% /tmp/new
+
+
+
+14.
+
+
+
+root@vagrant:/tmp/new# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda                            8:0    0   64G  0 disk
+├─sda1                         8:1    0  512M  0 part  /boot/efi
+├─sda2                         8:2    0    1K  0 part
+└─sda5                         8:5    0 63.5G  0 part
+  ├─vgvagrant-root           253:0    0 62.6G  0 lvm   /
+  └─vgvagrant-swap_1         253:1    0  980M  0 lvm   [SWAP]
+sdb                            8:16   0  2.5G  0 disk
+├─sdb1                         8:17   0    2G  0 part
+│ └─md0                        9:0    0    2G  0 raid1
+└─sdb2                         8:18   0  511M  0 part
+  └─md1                        9:1    0 1018M  0 raid0
+    └─netology35-n35--10--lv 253:2    0  100M  0 lvm   /tmp/new
+sdc                            8:32   0  2.5G  0 disk
+├─sdc1                         8:33   0    2G  0 part
+│ └─md0                        9:0    0    2G  0 raid1
+└─sdc2                         8:34   0  511M  0 part
+  └─md1                        9:1    0 1018M  0 raid0
+    └─netology35-n35--10--lv 253:2    0  100M  0 lvm   /tmp/new
+
+
+
+15.
+
+
+
+root@vagrant:/tmp/new# gzip -t /tmp/new/test.gz
+root@vagrant:/tmp/new# echo $?
+0
+
+
+
+
+
+
+
+16.
+
+
+root@vagrant:/tmp/new# pvmove -n n35-10-lv /dev/md1 /dev/md0
+  /dev/md1: Moved: 12.00%
+  /dev/md1: Moved: 100.00%
+
+
+
+17.
+
+
+
+root@vagrant:/tmp/new# mdadm --fail /dev/md0 /dev/sdb1
+mdadm: set /dev/sdb1 faulty in /dev/md0
+
+
+18.
+
+
+
+root@vagrant:/tmp/new# dmesg | grep md0 | tail -n 2
+[ 2858.194026] md/raid1:md0: Disk failure on sdb1, disabling device.
+               md/raid1:md0: Operation continuing on 1 devices.
+
+
+
+19.
+
+
+root@vagrant:/tmp/new# gzip -t /tmp/new/test.gz
+root@vagrant:/tmp/new# echo $?
+0
+
+
+20.
+Выполнено
+
+
+
 
 
 
