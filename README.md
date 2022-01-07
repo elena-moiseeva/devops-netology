@@ -1,37 +1,19 @@
 1.
 
+В Linux:
+vagrant@vagrant:~$ ip -br link show
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+eth0             UP             08:00:27:73:60:cf <BROADCAST,MULTICAST,UP,LOWER_UP>
 
+В Windows:
 
-vagrant@vagrant:~$ telnet stackoverflow.com 80
-Trying 151.101.193.69...
-Connected to stackoverflow.com.
-Escape character is '^]'.
-GET /questions HTTP/1.0
-HOST: stackoverflow.com
+PS C:\Users\ACER\Desktop> netsh interface show interface
 
-HTTP/1.1 301 Moved Permanently
-cache-control: no-cache, no-store, must-revalidate
-location: https://stackoverflow.com/questions
-x-request-guid: 57e43ec2-32f3-40c3-affe-20eb577b3913
-feature-policy: microphone 'none'; speaker 'none'
-content-security-policy: upgrade-insecure-requests; frame-ancestors 'self' https://stackexchange.com
-Accept-Ranges: bytes
-Date: Fri, 31 Dec 2021 11:59:24 GMT
-Via: 1.1 varnish
-Connection: close
-X-Served-By: cache-fra19144-FRA
-X-Cache: MISS
-X-Cache-Hits: 0
-X-Timer: S1640951964.039622,VS0,VE92
-Vary: Fastly-SSL
-X-DNS-Prefetch-Control: off
-Set-Cookie: prov=b3ad848f-a7a4-5212-26c3-248cca2ebc19; domain=.stackoverflow.com; expires=Fri, 01-Jan-2055 00:00:00 GMT; path=/; HttpOnly
-
-
-Connection closed by foreign host.
-
-Вернулся код 301 Moved Permanently - это означает, что запрошенный ресурс был перемещен в новое месторасположение, на которое указывает location: https://stackoverflow.com/questions.
-
+Состояние адм.  Состояние     Тип              Имя интерфейса
+---------------------------------------------------------------------
+Разрешен       Подключен      Выделенный       VirtualBox Host-Only Network
+Разрешен       Подключен      Выделенный       Беспроводная сеть
+Разрешен       Отключен       Выделенный       Ethernet
 
 
 
@@ -39,22 +21,48 @@ Connection closed by foreign host.
 2.
 
 
- 
+Протокол LLDP, открытая альтернатива проприетарному протоколу CDP от Cisco.
 
+Пакет lldpd.
 
-В ответ получили код 307 (Temporary Redirect)
+Командой lldpctl можно посмотреть соседей. То же самое можно увидеть командой lldpcli sh neigh
 
+lldpcli sh stat sum покажет общую статистику по всем интерфейсам: переданные, полученные пакеты и тд.
 
- 
-
-
-Страница полностью загрузилась за 1.32 сек. Самый долгий запрос - начальная загрузка страницы 501 мс
-
+lldpcli sh int покажет информацию по интерфейсам, на которых запущен lldpd.
 
 
 3.
 
-85.174.200.166
+
+Для разделения коммутатора на несколько виртуальных сетей используется технология VLAN.
+
+В Linux может быть использован следующий пакет apt install vlan. Для настройки VLAN через командную строку можно использовать предустановленный пакет iproute2. Пример настройки через iproute2:
+
+root@vagrant:~# ip -br link
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+eth0             UP             08:00:27:73:60:cf <BROADCAST,MULTICAST,UP,LOWER_UP>
+root@vagrant:~# ip link add link eth0 name eth0.10 type vlan id 10
+root@vagrant:~# ip -br link
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+eth0             UP             08:00:27:73:60:cf <BROADCAST,MULTICAST,UP,LOWER_UP>
+eth0.10@eth0     DOWN           08:00:27:73:60:cf <BROADCAST,MULTICAST>
+root@vagrant:~# ip link set dev eth0.10 up
+root@vagrant:~# ip -br link
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+eth0             UP             08:00:27:73:60:cf <BROADCAST,MULTICAST,UP,LOWER_UP>
+eth0.10@eth0     UP             08:00:27:73:60:cf <BROADCAST,MULTICAST,UP,LOWER_UP>
+
+
+
+Настройка VLAN может быть задана через файл /etc/network/interfaces:
+
+auto eth0.20
+iface eth0.20 inet static
+address 192.168.10.100
+netmask 255.255.255.0
+vlan_raw_device eth0
+
 
 
 
@@ -62,12 +70,56 @@ Connection closed by foreign host.
 4.
 
 
-vagrant@vagrant:~$ whois 85.174.200.166 | grep ^descr
-descr:          OJSC Rostelecom Macroregional Branch South
-descr:          "Sochielectrosvyaz", Sochi, Russia
-descr:          OJSC Rostelecom Macroregional Branch South
-vagrant@vagrant:~$ whois 85.174.200.166 | grep ^origin
-origin:         AS12389
+root@vagrant:~# modinfo bonding | grep mode:
+parm:           mode:Mode of operation; 0 for balance-rr, 1 for active-backup, 2 for balance-xor, 3 for broadcast, 4 for 802.3ad, 5 for balance-tlb, 6 for balance-alb (charp)
+
+
+Обеспечивают только фейловер, или фейловер и балансировку:
+
+active-backup и broadcast обеспечивают только отказоустойчивость
+balance-tlb, balance-alb, balance-rr, balance-xor и 802.3ad обеспечат отказоустойчивость и балансировку
+Можно настроить только с одной стороны, или потребуют настройки хоста и свича:
+
+active-backup, balance-tlb и balance-alb работают "сами по себе", можно настроить только на одном хосте
+broadcast, balance-rr, balance-xor и 802.3ad потребуют настройки ещё и коммутатора.
+
+Рабочие конфиги:
+
+active-backup на отказоустойчивость:
+
+ network:
+   version: 2
+   renderer: networkd
+   ethernets:
+     ens3:
+       dhcp4: no 
+       optional: true
+     ens5: 
+       dhcp4: no 
+       optional: true
+   bonds:
+     bond0: 
+       dhcp4: yes 
+       interfaces:
+         - ens3
+         - ens5
+       parameters:
+         mode: active-backup
+         primary: ens3
+         mii-monitor-interval: 2
+balance-alb, балансировка
+
+   bonds:
+     bond0: 
+       dhcp4: yes 
+       interfaces:
+         - ens3
+         - ens5
+       parameters:
+         mode: balance-alb
+         mii-monitor-interval: 2
+
+
 
 
 
@@ -75,29 +127,58 @@ origin:         AS12389
 5.
 
 
-vagrant@vagrant:~$ traceroute -An 8.8.8.8 -I
-traceroute to 8.8.8.8 (8.8.8.8), 30 hops max, 60 byte packets
- 1  10.0.2.2 [*]  0.377 ms  0.338 ms  0.323 ms
- 2  192.168.1.1 [*]  25.476 ms  47.098 ms  47.276 ms
- 3  * * *
- 4  * * *
- 5  * * *
- 6  * * *
- 7  * * *
- 8  * * *
- 9  142.251.71.194 [AS15169]  73.205 ms * *
-10  108.170.232.251 [AS15169]  73.176 ms  75.923 ms  80.689 ms
-11  172.253.79.169 [AS15169]  83.835 ms  86.487 ms  69.603 ms
-12  * * *
-13  * * *
-14  * * *
-15  * * *
-16  * * *
-17  * * *
-18  * * *
-19  * * *
-20  * * *
-21  8.8.8.8 [AS15169]  65.457 ms  64.432 ms  66.673 ms
+В сети с маской /29 - 8 ip адресов, 6 из них можно использовать для хостов.
+
+root@vagrant:~# ipcalc 10.10.10.0/29
+Address:   10.10.10.0           00001010.00001010.00001010.00000 000
+Netmask:   255.255.255.248 = 29 11111111.11111111.11111111.11111 000
+Wildcard:  0.0.0.7              00000000.00000000.00000000.00000 111
+=>
+Network:   10.10.10.0/29        00001010.00001010.00001010.00000 000
+HostMin:   10.10.10.1           00001010.00001010.00001010.00000 001
+HostMax:   10.10.10.6           00001010.00001010.00001010.00000 110
+Broadcast: 10.10.10.7           00001010.00001010.00001010.00000 111
+Hosts/Net: 6                     Class A, Private Internet
+
+
+Подсетей с маской /29 в сети с маской /24 - 32 подсети.
+
+root@vagrant:~# ipcalc 10.10.10.0/24 -s 6 6
+Address:   10.10.10.0           00001010.00001010.00001010. 00000000
+Netmask:   255.255.255.0 = 24   11111111.11111111.11111111. 00000000
+Wildcard:  0.0.0.255            00000000.00000000.00000000. 11111111
+=>
+Network:   10.10.10.0/24        00001010.00001010.00001010. 00000000
+HostMin:   10.10.10.1           00001010.00001010.00001010. 00000001
+HostMax:   10.10.10.254         00001010.00001010.00001010. 11111110
+Broadcast: 10.10.10.255         00001010.00001010.00001010. 11111111
+Hosts/Net: 254                   Class A, Private Internet
+
+1. Requested size: 6 hosts
+Netmask:   255.255.255.248 = 29 11111111.11111111.11111111.11111 000
+Network:   10.10.10.0/29        00001010.00001010.00001010.00000 000
+HostMin:   10.10.10.1           00001010.00001010.00001010.00000 001
+HostMax:   10.10.10.6           00001010.00001010.00001010.00000 110
+Broadcast: 10.10.10.7           00001010.00001010.00001010.00000 111
+Hosts/Net: 6                     Class A, Private Internet
+
+2. Requested size: 6 hosts
+Netmask:   255.255.255.248 = 29 11111111.11111111.11111111.11111 000
+Network:   10.10.10.8/29        00001010.00001010.00001010.00001 000
+HostMin:   10.10.10.9           00001010.00001010.00001010.00001 001
+HostMax:   10.10.10.14          00001010.00001010.00001010.00001 110
+Broadcast: 10.10.10.15          00001010.00001010.00001010.00001 111
+Hosts/Net: 6                     Class A, Private Internet
+
+Needed size:  16 addresses.
+Used network: 10.10.10.0/28
+Unused:
+10.10.10.16/28
+10.10.10.32/27
+10.10.10.64/26
+10.10.10.128/25
+
+
 
 
 
@@ -105,35 +186,23 @@ traceroute to 8.8.8.8 (8.8.8.8), 30 hops max, 60 byte packets
 
 
 
-                               My traceroute  [v0.93]
-vagrant (10.0.2.15)                                        2022-01-02T18:05:29+0000
-Keys:  Help   Display mode   Restart statistics   Order of fields   quit
-                                           Packets               Pings
- Host                                    Loss%   Snt   Last   Avg  Best  Wrst StDev
- 1. AS???    10.0.2.2                     0.0%    16    0.9   0.7   0.3   1.1   0.2
- 2. AS???    192.168.1.1                  0.0%    16    4.5   7.0   3.3  26.2   6.2
- 3. AS???    100.96.0.1                  25.0%    16   33.9  46.4  24.0 159.0  46.9
- 4. AS12389  94.233.252.179              68.8%    16   25.1  37.1  24.1  84.6  26.6
- 5. AS12389  94.233.252.178              31.2%    16   38.0  85.4  36.1 250.7  75.8
- 6. (waiting for reply)
- 7. (waiting for reply)
- 8. AS15169  108.170.250.146             53.3%    16   59.8  87.0  59.8 153.3  36.3
- 9. AS15169  142.251.71.194              37.5%    16   78.0  93.1  74.2 188.7  35.7
-10. AS15169  108.170.232.251              6.2%    16   68.4  84.5  68.4 147.6  23.2
-11. AS15169  172.253.79.169              12.5%    16   73.6  90.5  70.5 241.2  44.3
-12. (waiting for reply)
-13. (waiting for reply)
-14. (waiting for reply)
-15. (waiting for reply)
-16. (waiting for reply)
-17. (waiting for reply)
-18. (waiting for reply)
-19. (waiting for reply)
-20. (waiting for reply)
-21. AS15169  8.8.8.8                      0.0%    13   68.7  78.4  68.0 138.2  19.5
 
 
-Наибольшая задержка на участке AS15169  142.251.71.194 - в этом месте ping составляет 78 мс.
+Диапазон 100.64.0.0/10 (RFC 6598): возьмем сеть 100.64.0.0/26
+
+
+root@vagrant:~# ipcalc 100.64.0.0/26
+Address:   100.64.0.0           01100100.01000000.00000000.00 000000
+Netmask:   255.255.255.192 = 26 11111111.11111111.11111111.11 000000
+Wildcard:  0.0.0.63             00000000.00000000.00000000.00 111111
+=>
+Network:   100.64.0.0/26        01100100.01000000.00000000.00 000000
+HostMin:   100.64.0.1           01100100.01000000.00000000.00 000001
+HostMax:   100.64.0.62          01100100.01000000.00000000.00 111110
+Broadcast: 100.64.0.63          01100100.01000000.00000000.00 111111
+Hosts/Net: 62
+
+Маска для диапазонов будет /26, она позволит подключить 62 хоста
 
 
 
@@ -142,29 +211,20 @@ Keys:  Help   Display mode   Restart statistics   Order of fields   quit
 7.
 
 
-Получаем список DNS серверов:
-vagrant@vagrant:~$ dig dns.google NS +noall +answer
-dns.google.             21600   IN      NS      ns1.zdns.google.
-dns.google.             21600   IN      NS      ns4.zdns.google.
-dns.google.             21600   IN      NS      ns3.zdns.google.
-dns.google.             21600   IN      NS      ns2.zdns.google.
 
-Получаем список A записей:
-vagrant@vagrant:~$ dig dns.google A +noall +answer
-dns.google.             654     IN      A       8.8.8.8
-dns.google.             654     IN      A       8.8.4.4
+Проверить таблицу можно так:
 
+Linux: ip neigh, arp -n
+Windows: arp -a
+Очистить кеш так:
 
+Linux: ip neigh flush
+Windows: arp -d *
+Удалить один IP так:
 
-8.
+Linux: ip neigh delete <IP> dev <INTERFACE>, arp -d <IP>
+Windows: arp -d <IP>
 
 
-
-vagrant@vagrant:~$ dig -x 8.8.4.4 +noall +answer
-4.4.8.8.in-addr.arpa.   25029   IN      PTR     dns.google.
-vagrant@vagrant:~$ dig -x 8.8.8.8 +noall +answer
-8.8.8.8.in-addr.arpa.   23034   IN      PTR     dns.google.
-
-К обоим IP адресам привязано доменное имя dns.google.
 
 
