@@ -1,97 +1,122 @@
 1.
 
 
-vagrant@vagrant:~$ a=1
-vagrant@vagrant:~$ b=2
-vagrant@vagrant:~$ c=a+b
-vagrant@vagrant:~$ echo $c
-a+b
-vagrant@vagrant:~$ d=$a+$b
-vagrant@vagrant:~$ echo $d
-1+2
-vagrant@vagrant:~$ e=$(($a+$b))
-vagrant@vagrant:~$ echo $e
+>>> a = 1
+>>> b = '2'
+>>> c = a + b
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: unsupported operand type(s) for +: 'int' and 'str'
+>>> c=a+int(b)
+>>> print(c)
 3
-vagrant@vagrant:~$
-
-c = a+b потому что переменным может быть присвоино целое число либо строка. Т.к. a+b не целое число, значит присвоилась строка.
-d = 1+2 потому что переменная d не целочисленная, но т.к. перед a и b знак $, то с присвоилась строка значений a и b.
-e = 3 потому что благодаря $(( )) происходит присвоение целочисленной суммы a и b в e.
-
+>>> c=int(str(a)+str(b))
+>>> print(c)
+12
 
 
 
 2.
 
+#!/usr/bin/env python3
 
+import os
 
-    1. в условии нехватате закрывающей скобки ) - пометил *
-    2. слишком частые проверки забивают файл, нужно добавить sleep $timeout - для задания интервала проверки
-    3. нужно добавить проверку успешности чтоб выйти из цикла
-       например: else exit
-В итоге так:
+bash_command = ["cd ~/netology/sysadm-homeworks", "git status"]
+result_os = os.popen(' && '.join(bash_command)).read()
+#is_change = False
+for result in result_os.split('\n'):
+    if result.find('modified') != -1:
+        prepare_result = result.replace('\tmodified:   ', '')
+        print(os.path.abspath(prepare_result))
+#        break
 
-    while (( 1 == 1 ))
-    do
-        curl https://localhost:4757
-        if (($? != 0))
-        then
-            date >> curl.log
-        else exit
-        fi
-        sleep 5
-    done
-
-
-
-vagrant@vagrant:~$ ./bash.sh
-curl: (7) Failed to connect to localhost port 4757: Connection refused
-curl: (7) Failed to connect to localhost port 4757: Connection refused
-curl: (7) Failed to connect to localhost port 4757: Connection refused
-curl: (7) Failed to connect to localhost port 4757: Connection refused
-curl: (7) Failed to connect to localhost port 4757: Connection refused
-curl: (7) Failed to connect to localhost port 4757: Connection refused
-
+vagrant@vagrant:~/netology/sysadm-homeworks$ ./3script_py.sh
+/home/vagrant/netology/sysadm-homeworks/1.md
+/home/vagrant/netology/sysadm-homeworks/11.md
 
 
 
 
 3.
 
+#!/usr/bin/env python3
+print("Введите полный путь к репозиторию(со знаком '/' в конце):")
+path = input()
+
+import os
+
+os.chdir(path)
+bash_command = ["git status"]
+result_os = os.popen(' && '.join(bash_command)).read()
+#is_change = False
+for result in result_os.split('\n'):
+    if result.find('modified') != -1:
+        prepare_result = result.replace('\tmodified:   ', '')
+        print(path+prepare_result)
+#        break
 
 
-#!/usr/bin/env bash
-declare -i a
-a=0
-while (($a<5))
-do 
-curl 192.168.0.1:80
-echo $? >> curl.log
-curl 173.194.222.113:80
-echo $? >> curl.log
-curl 87.250.250.242:80
-echo $? >> curl.log
-let "a +=1"
-done
+vagrant@vagrant:~/netology/sysadm-homeworks$ ./2script_py.sh
+Введите полный путь к репозиторию(со знаком '/' в конце):
+/home/vagrant/netology/sysadm-homeworks/
+/home/vagrant/netology/sysadm-homeworks/1.md
+/home/vagrant/netology/sysadm-homeworks/11.md
+vagrant@vagrant:~/netology/sysadm-homeworks$
+
 
 
 
 4.
 
 
+#!/usr/bin/env python3
+
+import socket
+import time
+
+# Наши узлы
+hosts = ('drive.google.com', 'mail.google.com', 'google.com')
+# Объявляем пустой dict
+ip_host = {}
+while ( True ):
+    #  проходимся по каждому узлу
+    for host in hosts:
+        # Получаем его ip адреса
+        ip = socket.gethostbyname_ex(host)[2]
+        # При первой проверке наш dict пустой, поэтому запустим обработку исключений
+        # и просто заполним наш dict
+        try:
+            # Если новый ip не отличается от старого, то просто печатаем инфо 
+            if ( ip_host[host] == ip ):
+                print(host + " - " + str(ip))
+            # Если IP отличается, то печатаем ошибку
+            else:
+                print("[ERROR] " + host + " IP mismatch: " + ip_host[host] + " " + ip)
+            # Обновляем IP адреса
+            ip_host[host] = ip
+        # Здесь просто заполняем наш dict и выводим сообщения
+        except:
+            ip_host[host] = ip
+            print(host + " - " + str(ip))
+        time.sleep(3)
 
 
-ip_array=(192.168.0.1:80 173.194.222.113:80 87.250.250.242:80)
-while ((1==1))
-  do
-  for i in ${ip_array[@]}
-    do
-    curl $i
-    if (($? != 0))
-      then
-      echo $i > error
-      break 2
-    fi
-  done
-done
+
+
+vagrant@vagrant:~$ ./1script_py.sh
+drive.google.com - ['142.251.1.194']
+mail.google.com - ['216.58.210.133']
+google.com - ['216.58.209.174']
+drive.google.com - ['142.251.1.194']
+mail.google.com - ['216.58.210.133']
+google.com - ['216.58.209.174']
+drive.google.com - ['142.251.1.194']
+mail.google.com - ['216.58.210.133']
+google.com - ['216.58.209.174']
+drive.google.com - ['142.251.1.194']
+mail.google.com - ['216.58.210.133']
+google.com - ['216.58.209.174']
+drive.google.com - ['142.251.1.194']
+mail.google.com - ['216.58.210.133']
 
