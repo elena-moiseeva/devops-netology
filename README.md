@@ -63,17 +63,16 @@ while (( 1 == 1 ))
 ### Ваш скрипт:
 ```bash
 #!/usr/bin/env bash
-declare -i a
-a=0
-while (($a<5))
-do 
-curl 192.168.0.1:80
-echo $? >> curl.log
-curl 173.194.222.113:80
-echo $? >> curl.log
-curl 87.250.250.242:80
-echo $? >> curl.log
-let "a +=1"
+hosts=(192.168.0.1 173.194.222.113 87.250.250.24)
+timeout=5
+for i in {1..5}
+do
+date >>hosts.log
+    for h in ${hosts[@]}
+    do
+	curl -Is --connect-timeout $timeout $h:80 >/dev/null
+        echo "    check" $h status=$? >>hosts.log
+    done
 done
 
 ```
@@ -84,17 +83,21 @@ done
 ### Ваш скрипт:
 ```bash
 #!/usr/bin/env bash
-declare -i a
-a=0
-while (($a<5))
-do 
-curl 192.168.0.1:80
-echo $? >> curl.log
-curl 173.194.222.113:80
-echo $? >> curl.log
-curl 87.250.250.242:80
-echo $? >> curl.log
-let "a +=1"
+hosts=(192.168.0.1 173.194.222.113 87.250.250.24)
+timeout=5
+res=0
+
+while (($res == 0))
+do
+    for h in ${hosts[@]}
+    do
+	curl -Is --connect-timeout $timeout $h:80 >/dev/null
+	res=$?
+	if (($res != 0))
+	then
+	    echo "    ERROR on " $h status=$res >>hosts2.log
+	fi
+    done
 done
 
 ```
